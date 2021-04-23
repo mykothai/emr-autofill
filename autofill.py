@@ -100,7 +100,6 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     time.sleep(var.input_delay)
 
     msg.show_confirmation('Fee item: ' + str(fee_item))
-    # driver.find_element_by_xpath("//input[@placeholder='Fee Item']").send_keys(fee_item)  # enter fee item
     fee_element = driver.find_element_by_xpath("//input[@placeholder='Fee Item']")
     keypress.send_delayed_keys(fee_element, str(fee_item))
 
@@ -124,81 +123,83 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
 
 
 def main():
-    validate.is_environment_set(var.env)
     start_time = time.time()
-    df = elt.pandarize(var.env)
-    driver = browser_driver.get_driver(var.browser)
-    if var.env == 'dev':
-        msg.dev_env_test()
-
-    msg.show_prompt('Ready to start?')
-
-    print('============================= ACCESSING WEBSITE ==============================')
-    driver.get(var.site)
-    driver.implicitly_wait(3)  # driver waits before searching when element is not present
-    login(driver)
-
-    driver.find_element_by_xpath("//mat-icon[@id='tabs__icon--practitioner-dropdown']").click()
-
-    if var.env == 'production':
-        driver.find_element_by_xpath("//span[text()='Laksman, Z (ZLaksman)']").click()
-    elif var.env == 'dev':
-        driver.find_element_by_xpath("//span[text()='MD, S (S-MD)']").click()
-
-    driver.find_element_by_xpath("//button[@id='sidebar-component__button--app-selector-button']").click()
-    driver.find_element_by_xpath("//span[text()='Billing']").click()
-
-    print("Start data entry")
-    for patient in df.itertuples():
-        phn = patient[3]
-        last_name = patient[4]
-        first_name = patient[5]
-        dob = patient[7]
-        gender = patient[6]
-        phone = 0
-        md_number = patient[10]
-        service_date = patient[12]
-        fee_item = patient[13]
-        diagnostic_code = patient[14]
-
-        print('============================= SEARCHING PATIENT BY PHN =======================')
-        driver.find_element_by_xpath("//mat-icon[@id='patient-selection-container__button--search-patient']").click()
-        driver.find_element_by_xpath("//input[@id='patient-search-dialog__input--phn']").send_keys(phn)  # enter PHN
-
-        is_patient_exist = False
-        try:
-            if driver.find_element_by_xpath("//div[@id='patient-search-dialog_label--no-patient-found']"):
-                print('No Patients Found...adding patient')
-                print('============================= ADDING NEW PATIENT =============================')
-                add_patient(driver, last_name, first_name, dob, gender, phone)
-
-                print('============================= BILLING INFORMATION =========================')
-                add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
-        except Exception as e:
-            print(e)
-            is_patient_exist = True
-            pass
-
-        if is_patient_exist:
-            print('============================= PATIENT FOUND ===============================')
-            formatted_phn = phn[:4] + " " + phn[4:7] + " " + phn[7:]
-            print("Patient found", formatted_phn)
-            driver.find_element_by_xpath(
-                "//td[@class='mat-cell cdk-cell cdk-column-phn mat-column-phn ng-star-inserted']").click()
-
-            add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
-
-        print(colored('\n============================= BILLING COMPLETE ============================\n',
-                      'white',
-                      'on_green'
-                      ))
-
+    try:
+        validate.is_environment_set(var.env)
+        df = elt.pandarize(var.env)
+        driver = browser_driver.get_driver(var.browser)
         if var.env == 'dev':
-            break  # prevent moving on to next row (patient)
+            msg.dev_env_test()
 
-    print("Done...closing driver")
-    # driver.close()  # closes browser
-    msg.show_time_elapsed("--- Elapsed time: %s minutes ---" % ((time.time() - start_time) / 60))
+        msg.show_prompt('Ready to start?')
+
+        print('============================= ACCESSING WEBSITE ==============================')
+        driver.get(var.site)
+        driver.implicitly_wait(3)
+        login(driver)
+
+        driver.find_element_by_xpath("//mat-icon[@id='tabs__icon--practitioner-dropdown']").click()
+
+        if var.env == 'production':
+            driver.find_element_by_xpath("//span[text()='Laksman, Z (ZLaksman)']").click()
+        elif var.env == 'dev':
+            driver.find_element_by_xpath("//span[text()='MD, S (S-MD)']").click()
+
+        driver.find_element_by_xpath("//button[@id='sidebar-component__button--app-selector-button']").click()
+        driver.find_element_by_xpath("//span[text()='Billing']").click()
+
+        print("Start data entry")
+        for patient in df.itertuples():
+            phn = patient[3]
+            last_name = patient[4]
+            first_name = patient[5]
+            dob = patient[7]
+            gender = patient[6]
+            phone = 0
+            md_number = patient[10]
+            service_date = patient[12]
+            fee_item = patient[13]
+            diagnostic_code = patient[14]
+
+            print('============================= SEARCHING PATIENT BY PHN =======================')
+            driver.find_element_by_xpath(
+                "//mat-icon[@id='patient-selection-container__button--search-patient']").click()
+            driver.find_element_by_xpath("//input[@id='patient-search-dialog__input--phn']").send_keys(phn)  # enter PHN
+
+            is_patient_exist = False
+            try:
+                if driver.find_element_by_xpath("//div[@id='patient-search-dialog_label--no-patient-found']"):
+                    print('No Patients Found...adding patient')
+                    print('============================= ADDING NEW PATIENT =============================')
+                    add_patient(driver, last_name, first_name, dob, gender, phone)
+
+                    print('============================= BILLING INFORMATION =========================')
+                    add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
+            except Exception as e:
+                print(e)
+                is_patient_exist = True
+                pass
+
+            if is_patient_exist:
+                print('============================= PATIENT FOUND ===============================')
+                formatted_phn = phn[:4] + " " + phn[4:7] + " " + phn[7:]
+                print("Patient found", formatted_phn)
+                driver.find_element_by_xpath(
+                    "//td[@class='mat-cell cdk-cell cdk-column-phn mat-column-phn ng-star-inserted']").click()
+
+                add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
+
+            print(colored('\n============================= BILLING COMPLETE ============================\n',
+                          'white',
+                          'on_green'
+                          ))
+
+            if var.env == 'dev':
+                break  # prevent moving on to next row (patient)
+
+        print("Done...closing driver")
+    finally:
+        msg.show_time_elapsed("--- Elapsed time: %s minutes ---" % ((time.time() - start_time) / 60))
 
 
 if __name__ == "__main__":

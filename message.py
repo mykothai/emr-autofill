@@ -38,4 +38,4 @@ def show_prompt(message):
 
 
 def show_time_elapsed(message):
-    print(colored(message, 'white', 'on_green', attrs=['bold']))
+    print(colored(message, 'green', attrs=['bold']))

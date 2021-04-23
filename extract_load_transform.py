@@ -11,23 +11,35 @@ def read_csv(file):
         msg.show_error('Unable to read file ERROR: ' + str(e))
 
 
-def pandarize(env):
-    # Do the data things
+def load_data(env):
     if env == 'production':
         msg.show_message('Select patient data csv file...')
-        root = tk.Tk()
-        root.withdraw()
-        file_path = filedialog.askopenfilename()
-        df = read_csv(file_path)
-        msg.show_confirmation('File selected: ' + file_path + '\n')
+        try:
+            root = tk.Tk()
+            root.withdraw()
+            while True:
+                file_path = filedialog.askopenfilename()
+                if not file_path:
+                    msg.show_prompt('No file selected.')
+                else:
+                    break
+            msg.show_confirmation('File selected: ' + file_path + '\n')
+            df = read_csv(file_path)
+            return df
+        except Exception as e:
+            msg.show_error('Somethings wrong with the file selected' + str(e))
     elif env == 'dev':
         print('Reading Test Data...')
         df = read_csv('E:../test_data.csv')
+        return df
+
+
+def pandarize(env):
+    df = load_data(env)
     print('============================= PANDARIZING DATA =============================')
-    df[' PHN'] = df[' PHN'].astype('str')  # field
-    df[' DOB'] = pd.to_datetime(df[' DOB'], format='%d/%m/%Y').astype(str)  # format is the existing data format
-    df[' Interpretation Date'] = pd.to_datetime(df[' Interpretation Date'], format='%d/%m/%Y').astype(
-        str)  # format is the existing data format
+    df[' PHN'] = df[' PHN'].astype('str')
+    df[' DOB'] = pd.to_datetime(df[' DOB'], format='%d/%m/%Y').astype(str)
+    df[' Interpretation Date'] = pd.to_datetime(df[' Interpretation Date'], format='%d/%m/%Y').astype(str)
     df[' Ref Doctor BillTo #'] = df[' Ref Doctor BillTo #'].apply(
         lambda x: '{0:0>5}'.format(x))  # add leading zeros to get 5 digits
 
