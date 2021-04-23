@@ -1,0 +1,1 @@
+Place chrome / firefox driver in resources folder and add driver version to its filename. (e.g. chromedriver89.0.4389.23)
