@@ -24,13 +24,13 @@ def login(driver):
 def add_patient(driver, last_name, first_name, dob, gender, phone):
     driver.find_element_by_xpath("//button-primary[@id='patient-search-dialog__button--add-new-patient']").click()
 
-    print(colored('Last name: ' + last_name, 'yellow'))
+    msg.show_confirmation('Last name: ' + last_name)
     driver.find_element_by_xpath("//input[@Id='primary-info__input--last-name']").send_keys(last_name)
 
-    print(colored('First name: ' + first_name, 'yellow'))
+    msg.show_confirmation('First name: ' + first_name)
     driver.find_element_by_xpath("//input[@Id='primary-info__input--first-name']").send_keys(first_name)
 
-    print(colored('DOB: ' + dob, 'yellow'))
+    msg.show_confirmation('DOB: ' + dob)
     dob_input = WebDriverWait(driver, 5).until(
         EC.element_to_be_clickable((
             By.XPATH, "//div[@class='input-row red-border']")))
@@ -43,7 +43,7 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     action_chain = ActionChains(driver)  # workaround for stale DOM
     action_chain.move_to_element(dob_input).send_keys(dob).perform()  # enters DOB
 
-    print(colored('Gender: ' + gender, 'yellow'))
+    msg.show_confirmation('Gender: ' + gender)
     try:
         gender_select = driver.find_element_by_xpath("//mat-select[@Id='primary-info__select--gender']")
         action_chain = ActionChains(driver)  # workaround for stale DOM
@@ -71,20 +71,13 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     # click on footer div in case save button's not enabled
     driver.find_element_by_xpath("//div[@class='footer-container']").click()
 
-    try:  # TODO except block never executed (suspect save button always available)
+    try:
         if driver.find_element_by_xpath("//form[@class='ng-untouched ng-dirty ng-valid']"):
             driver.find_element_by_xpath("//span[text()='SAVE']").click()
             print('Patient saved!')
     except Exception as e:
         error_string = e, 'Cannot SAVE, fields are missing or invalid'
         msg.show_error(error_string)
-
-    # try:
-    #     if not driver.find_element_by_xpath("//div[text()='Please save patient first']"):
-    #         driver.find_element_by_xpath("//span[text()=' MSP CHECKED ']").click()  # click check msp
-    #         print('MSP CHECKED button clicked')
-    # except Exception as e:
-    #     print(e, 'Cannot CHECK MSP, fields are missing or invalid')
 
     try:
         if driver.find_element_by_xpath("//form[@class='ng-untouched ng-dirty ng-valid']"):
@@ -96,27 +89,17 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
 
 
 def add_billing(driver, service_date, fee_item, diag_code, md_number):
-    print(colored('Service date: ' + str(service_date), 'yellow'))
-
-    # TODO for now, manually enter service date
-    # show_prompt("Input service date then continue. ")
-    # print('service date ', patient[12])
-    # service_date_input = driver.find_element_by_xpath("//div[@class='input-row red-border']")
-    # WebDriverWait(driver, 5).until(
-    #     EC.element_to_be_clickable((
-    #         By.XPATH, "//div[@class='input-row red-border']"))).click()
-    # action.move_to_element(service_date_input).send_keys(service_date).perform()  # enter service date
-
+    msg.show_confirmation('Service date: ' + str(service_date))
     time.sleep(var.input_delay)
+    msg.show_confirmation('MD number: ' + str(md_number))
 
-    print(colored('MD number: ' + str(md_number), 'yellow'))
     md_element = driver.find_element_by_xpath("//input[@placeholder='Ref. by MD Number']")
     md_element.clear()
     md_element.send_keys(md_number)  # enter md number
 
     time.sleep(var.input_delay)
 
-    print(colored('Fee item: ' + str(fee_item), 'yellow'))
+    msg.show_confirmation('Fee item: ' + str(fee_item))
     # driver.find_element_by_xpath("//input[@placeholder='Fee Item']").send_keys(fee_item)  # enter fee item
     fee_element = driver.find_element_by_xpath("//input[@placeholder='Fee Item']")
     keypress.send_delayed_keys(fee_element, str(fee_item))
@@ -125,32 +108,10 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     time.sleep(var.input_delay)
     keypress.send_delayed_keys(fee_element, str(fee_item)[-1:])
 
-    print(colored('Diagnostic code: ' + str(diag_code), 'yellow'))
+    msg.show_confirmation('Diagnostic code: ' + str(diag_code))
     dc_element = driver.find_element_by_xpath("//input[@placeholder='Diagnostic Code']")
     dc_element.clear()
     dc_element.send_keys(diag_code)  # enter diagnostic code
-
-    # TODO commented out error message: not right way to handle doctor not found
-    # try:
-    #     if driver.find_element_by_xpath("//mat-hint[@text=' Failed to load doctor ']"):
-    #         # show_prompt("Please add new doctor, then continue.")
-    #
-    #         # TODO complete add new doctor form
-    #         '''
-    #         if doctor DNE:
-    #             (driver.find_element_by_xpath("//mat-hint[text()=' Failed to load doctor ']")
-    #             click on magnifying glass
-    #                 click add new > MSP, last name, first name, phone = 0
-    #         '''
-    #         driver.find_element_by_xpath(
-    #             "//mat-icon[@class='mat-icon notranslate new-search-prefix mat-icon-no-color ng-tns-c120-104']"
-    #         ).click()
-    #         driver.find_element_by_xpath("//button-secondary[@id='doctor-search-dialog__button--add']").click()
-    #         # TODO function to parse doctor name from patient[8]
-    # except Exception as e:
-    #     show_error(e)
-    #     pass
-
     msg.show_prompt("Check if billing page is correct then continue. ")
 
     try:
@@ -237,11 +198,7 @@ def main():
 
     print("Done...closing driver")
     # driver.close()  # closes browser
-    print(colored("--- Elapsed time: %s minutes ---" % ((time.time() - start_time) / 60),
-                  'white',
-                  'on_green',
-                  attrs=['bold']
-                  ))
+    msg.show_time_elapsed("--- Elapsed time: %s minutes ---" % ((time.time() - start_time) / 60))
 
 
 if __name__ == "__main__":

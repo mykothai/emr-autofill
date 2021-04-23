@@ -36,3 +36,6 @@ def show_prompt(message):
             if terminate == 'y':
                 exit()
 
+
+def show_time_elapsed(message):
+    print(colored(message, 'white', 'on_green', attrs=['bold']))
