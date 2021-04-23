@@ -1,62 +1,16 @@
+import browser_driver
+import extract_load_transform as elt
+import keypress
+import message as msg
 import time
-import pandas as pd
-import tkinter as tk
+import validate
 import variables as var
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from colorama import init
 from termcolor import colored
-from sys import exit
-from tkinter import filedialog
-
-def init_colorama():
-    return init()
-
-def dev_env_test():
-    print(colored('Environment: \t' + var.env, 'yellow', attrs=['bold']))
-    print(colored('Browser: \t' + var.browser, 'yellow', attrs=['bold']))
-    print(colored('URL: \t' + var.site, 'yellow', attrs=['bold']))
-    print(colored('USER INPUT color test', 'blue', attrs=['bold']))
-    print(colored('ERROR color test', 'magenta', attrs=['bold']))
-    print(colored("ELAPSED Time color test", 'white', 'on_green', attrs=['bold']))
-
-
-def read_csv(file):
-    try:
-        return pd.read_csv(file)
-    except Exception as e:
-        show_error('Unable to read file ERROR: ' + str(e))
-
-
-def to_datetime(date):
-    return date.to_datetime()
-
-
-def elt_data(env):
-    print('============================= VALIDATING DATA =============================')
-    # Do the data things
-    if env == 'production':
-        print('Select patient data csv file...')
-        root = tk.Tk()
-        root.withdraw()
-        file_path = filedialog.askopenfilename()
-        df = read_csv(file_path)
-        print('File selected: ' + file_path)
-    elif env == 'dev':
-        print('Reading Test Data...')
-        df = read_csv('E:../test_data.csv')
-    df[' PHN'] = df[' PHN'].astype('str')  # field
-    df[' DOB'] = pd.to_datetime(df[' DOB'], format='%d/%m/%Y').astype(str)  # format is the existing data format
-    df[' Interpretation Date'] = pd.to_datetime(df[' Interpretation Date'], format='%d/%m/%Y').astype(
-        str)  # format is the existing data format
-    df[' Ref Doctor BillTo #'] = df[' Ref Doctor BillTo #'].apply(
-        lambda x: '{0:0>5}'.format(x))  # add leading zeros to get 5 digits
-
-    return df
 
 
 def login(driver):
@@ -65,69 +19,6 @@ def login(driver):
     driver.find_element_by_xpath("//input[@id='login__input--password']").send_keys(var.password)
     time.sleep(var.input_delay)
     driver.find_element_by_xpath("//button-primary[@id='login__input--submit']").click()
-
-
-def user_prompt(message):
-    print(colored('\n' + message.upper() + " Continue? (y/n)", 'blue', attrs=['bold']))
-    user_input = input()
-    if user_input == 'y':
-        pass
-    else:
-        print(colored("Are you sure you want to QUIT the program? (y/n)", 'red'))
-        terminate = input()
-        if terminate == 'y':
-            exit()
-        else:
-            pass
-
-
-def send_delayed_keys(element, text, delay=0.2):
-    for character in text:
-        end_time = time.time() + delay
-        element.send_keys(character)
-        time.sleep(end_time - time.time())
-
-
-def select_browser(browser):
-    if browser == 'chrome':
-        '''
-        Use Chrome - requires chromedriver in resources folder
-        '''
-        # set optional browser options
-        browser_options = webdriver.ChromeOptions()
-        browser_options.add_argument("start-maximized")
-        browser_options.add_argument("disable-infobars")
-        browser_options.add_argument("--disable-extensions")
-        browser_options.add_experimental_option('detach', True)  # keeps chrome and chromedriver open
-        driver = webdriver.Chrome(
-            executable_path=r'./resources/chromedriver89.0.4389.23.exe',
-            options=browser_options
-        )
-    elif browser == 'firefox':
-        '''
-        Use Firefox - requires geckodriver  in resources folder
-        '''
-        browser_options = webdriver.FirefoxOptions()
-        browser_options.add_argument("start-maximixed")
-        browser_options.add_argument("disable-infobars")
-        browser_options.add_argument("--disable-extensions")
-        driver = webdriver.Firefox(executable_path=r'./resources/geckodriver.exe', options=browser_options)
-    else:
-        show_error('error: no browser selected')
-        exit()
-
-    return driver
-
-
-def is_environment_set(env):
-    if env not in ('dev', 'production'):
-        show_error('Environment is not set...exiting program')
-        exit()
-    return True
-
-
-def show_error(error_msg):
-    print(colored(error_msg, 'magenta', attrs=['bold']))
 
 
 def add_patient(driver, last_name, first_name, dob, gender, phone):
@@ -166,7 +57,7 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
             driver.find_element_by_xpath("//mat-option[@value='T']").click()
     except Exception as e:
         error_string = e, 'Specified gender not found!'
-        show_error(error_string)
+        msg.show_error(error_string)
 
     driver.find_element_by_xpath("//input[@placeholder='Home Phone']").send_keys(
         phone)  # set phone number to 0 (default)
@@ -175,7 +66,7 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
         # workaround for invalid PHN to add patient in test env: check 'private' checkbox
         driver.find_element_by_xpath("//mat-checkbox[@Id='primary-info__checkbox--private']").click()
 
-    user_prompt("Check if patient information is correct. ")
+    msg.show_prompt("Check if patient information is correct. ")
 
     # click on footer div in case save button's not enabled
     driver.find_element_by_xpath("//div[@class='footer-container']").click()
@@ -186,7 +77,7 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
             print('Patient saved!')
     except Exception as e:
         error_string = e, 'Cannot SAVE, fields are missing or invalid'
-        show_error(error_string)
+        msg.show_error(error_string)
 
     # try:
     #     if not driver.find_element_by_xpath("//div[text()='Please save patient first']"):
@@ -201,14 +92,14 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
             print('Patient information pop up saved and closed!')
     except Exception as e:
         error_string = e, 'Cannot SAVE & CLOSE, fields are missing or invalid'
-        show_error(error_string)
+        msg.show_error(error_string)
 
 
 def add_billing(driver, service_date, fee_item, diag_code, md_number):
     print(colored('Service date: ' + str(service_date), 'yellow'))
 
     # TODO for now, manually enter service date
-    # user_prompt("Input service date then continue. ")
+    # show_prompt("Input service date then continue. ")
     # print('service date ', patient[12])
     # service_date_input = driver.find_element_by_xpath("//div[@class='input-row red-border']")
     # WebDriverWait(driver, 5).until(
@@ -228,11 +119,11 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     print(colored('Fee item: ' + str(fee_item), 'yellow'))
     # driver.find_element_by_xpath("//input[@placeholder='Fee Item']").send_keys(fee_item)  # enter fee item
     fee_element = driver.find_element_by_xpath("//input[@placeholder='Fee Item']")
-    send_delayed_keys(fee_element, str(fee_item))
+    keypress.send_delayed_keys(fee_element, str(fee_item))
 
     fee_element.send_keys(Keys.BACKSPACE)  # removes existing input
     time.sleep(var.input_delay)
-    send_delayed_keys(fee_element, str(fee_item)[-1:])
+    keypress.send_delayed_keys(fee_element, str(fee_item)[-1:])
 
     print(colored('Diagnostic code: ' + str(diag_code), 'yellow'))
     dc_element = driver.find_element_by_xpath("//input[@placeholder='Diagnostic Code']")
@@ -242,7 +133,7 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     # TODO commented out error message: not right way to handle doctor not found
     # try:
     #     if driver.find_element_by_xpath("//mat-hint[@text=' Failed to load doctor ']"):
-    #         # user_prompt("Please add new doctor, then continue.")
+    #         # show_prompt("Please add new doctor, then continue.")
     #
     #         # TODO complete add new doctor form
     #         '''
@@ -260,7 +151,7 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     #     show_error(e)
     #     pass
 
-    user_prompt("Check if billing page is correct then continue. ")
+    msg.show_prompt("Check if billing page is correct then continue. ")
 
     try:
         if driver.find_element_by_xpath("//form[@class='ng-star-inserted ng-dirty ng-touched ng-valid']"):
@@ -268,22 +159,20 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
             print('Patient information pop up saved and closed!')
     except Exception as e:
         error_string = e, 'Cannot CREATE, fields are missing or invalid'
-        show_error(error_string)
+        msg.show_error(error_string)
 
 
 def main():
-    is_environment_set(var.env)
-    init_colorama()
+    validate.is_environment_set(var.env)
     start_time = time.time()
-    df = elt_data(var.env)
-    driver = select_browser(var.browser)
+    df = elt.pandarize(var.env)
+    driver = browser_driver.get_driver(var.browser)
     if var.env == 'dev':
-        dev_env_test()
+        msg.dev_env_test()
 
-    user_prompt('Ready to start?')
+    msg.show_prompt('Ready to start?')
 
-    print('============================= ACCESS WEBSITE ==============================')
-    print('Open EMR')
+    print('============================= ACCESSING WEBSITE ==============================')
     driver.get(var.site)
     driver.implicitly_wait(3)  # driver waits before searching when element is not present
     login(driver)
@@ -311,7 +200,7 @@ def main():
         fee_item = patient[13]
         diagnostic_code = patient[14]
 
-        print('============================= SEARCH PATIENT BY PHN =======================')
+        print('============================= SEARCHING PATIENT BY PHN =======================')
         driver.find_element_by_xpath("//mat-icon[@id='patient-selection-container__button--search-patient']").click()
         driver.find_element_by_xpath("//input[@id='patient-search-dialog__input--phn']").send_keys(phn)  # enter PHN
 
@@ -319,7 +208,7 @@ def main():
         try:
             if driver.find_element_by_xpath("//div[@id='patient-search-dialog_label--no-patient-found']"):
                 print('No Patients Found...adding patient')
-                print('============================= ADD NEW PATIENT =============================')
+                print('============================= ADDING NEW PATIENT =============================')
                 add_patient(driver, last_name, first_name, dob, gender, phone)
 
                 print('============================= BILLING INFORMATION =========================')
