@@ -134,3 +134,7 @@ dmypy.json
 # User files
 *.csv
 *.xlsx
+
+# Browser drivers
+chromedriver*.exe
+geckodriver*.exe
