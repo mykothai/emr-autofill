@@ -8,15 +8,19 @@ from dotenv import load_dotenv
 from colorama import init
 from termcolor import colored
 from sys import exit
-import os
-import time
-import pandas as pd
+from tkinter import filedialog
 
 # Set up
 load_dotenv()
 site = os.environ.get('SITE')
 browser = os.environ.get('BROWSER')
 env = os.environ.get('ENV')
+if env == 'production':
+    user = os.environ.get('USER')
+    password = os.environ.get('PASSWORD')
+else:
+    user = os.environ.get('TEST_USER')
+    password = os.environ.get('TEST_PASSWORD')
 time_between_input = 0.5
 
 
@@ -63,15 +67,6 @@ def elt_data(env):
 
 
 def login(driver):
-    # Get credentials from file path
-    if env == 'production':
-        credentials = pd.read_csv('E:/auto-form-fill/creds.txt', sep=" ", header=None)
-    elif env == 'dev':
-        credentials = pd.read_csv('E:/auto-form-fill/test_creds.txt', sep=" ", header=None)
-    credentials.columns = ["user", "password"]
-    user = credentials['user'].values
-    password = credentials['password'].values
-
     print("Logging in")
     driver.find_element_by_xpath("//input[@id='login__input--username']").send_keys(user)
     driver.find_element_by_xpath("//input[@id='login__input--password']").send_keys(password)
@@ -103,8 +98,7 @@ def send_delayed_keys(element, text, delay=0.2):
 def select_browser(browser):
     if browser == 'chrome':
         '''
-        Use Chrome - requires chromedriver
-        chromedriverPath = "E:/auto-form-fill/resources/chromedriver.exe"
+        Use Chrome - requires chromedriver in resources folder
         '''
         # set optional browser options
         browser_options = webdriver.ChromeOptions()
@@ -113,18 +107,18 @@ def select_browser(browser):
         browser_options.add_argument("--disable-extensions")
         browser_options.add_experimental_option('detach', True)  # keeps chrome and chromedriver open
         driver = webdriver.Chrome(
-            executable_path=r'C:/Users/J-Mo/chromedriver/chromedriver89.0.4389.23.exe',
+            executable_path=r'./resources/chromedriver89.0.4389.23.exe',
             options=browser_options
         )
     elif browser == 'firefox':
         '''
-        Use Firefox - requires geckodriver
+        Use Firefox - requires geckodriver  in resources folder
         '''
         browser_options = webdriver.FirefoxOptions()
         browser_options.add_argument("start-maximixed")
         browser_options.add_argument("disable-infobars")
         browser_options.add_argument("--disable-extensions")
-        driver = webdriver.Firefox(options=browser_options)
+        driver = webdriver.Firefox(executable_path=r'./resources/geckodriver.exe', options=browser_options)
     else:
         show_error('error: no browser selected')
         exit()
@@ -243,7 +237,7 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     fee_element = driver.find_element_by_xpath("//input[@placeholder='Fee Item']")
     send_delayed_keys(fee_element, str(fee_item))
 
-    fee_element.send_keys(Keys.BACKSPACE)
+    fee_element.send_keys(Keys.BACKSPACE)  # removes existing input
     time.sleep(time_between_input)
     send_delayed_keys(fee_element, str(fee_item)[-1:])
 
