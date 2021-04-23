@@ -1,3 +1,7 @@
+import os
+import time
+import pandas as pd
+import tkinter as tk
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -51,11 +55,16 @@ def to_datetime(date):
 def elt_data(env):
     print('============================= VALIDATING DATA =============================')
     # Do the data things
-    print('Read CSV file...')
     if env == 'production':
-        df = read_csv('E:/auto-form-fill/data.csv')
+        print('Select patient data csv file...')
+        root = tk.Tk()
+        root.withdraw()
+        file_path = filedialog.askopenfilename()
+        df = read_csv(file_path)
+        print('File selected: ' + file_path)
     elif env == 'dev':
-        df = read_csv('E:/auto-form-fill/test_data.csv')
+        print('Reading Test Data...')
+        df = read_csv('E:../test_data.csv')
     df[' PHN'] = df[' PHN'].astype('str')  # field
     df[' DOB'] = pd.to_datetime(df[' DOB'], format='%d/%m/%Y').astype(str)  # format is the existing data format
     df[' Interpretation Date'] = pd.to_datetime(df[' Interpretation Date'], format='%d/%m/%Y').astype(
@@ -345,7 +354,10 @@ def main():
 
             add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
 
-        print(colored('\n============================= BILLING COMPLETE ============================\n', 'white', 'on_green'))
+        print(colored('\n============================= BILLING COMPLETE ============================\n',
+                      'white',
+                      'on_green'
+                      ))
 
         if env == 'dev':
             break  # prevent moving on to next row (patient)
@@ -356,8 +368,7 @@ def main():
                   'white',
                   'on_green',
                   attrs=['bold']
-                  )
-          )
+                  ))
 
 
 if __name__ == "__main__":
