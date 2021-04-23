@@ -1,41 +1,25 @@
-import os
 import time
 import pandas as pd
 import tkinter as tk
+import variables as var
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from dotenv import load_dotenv
 from colorama import init
 from termcolor import colored
 from sys import exit
 from tkinter import filedialog
 
-# Set up
-load_dotenv()
-site = os.environ.get('SITE')
-browser = os.environ.get('BROWSER')
-env = os.environ.get('ENV')
-if env == 'production':
-    user = os.environ.get('USER')
-    password = os.environ.get('PASSWORD')
-else:
-    user = os.environ.get('TEST_USER')
-    password = os.environ.get('TEST_PASSWORD')
-time_between_input = 0.5
-
-
 def init_colorama():
     return init()
 
-
 def dev_env_test():
-    print(colored('Environment: \t' + env, 'yellow', attrs=['bold']))
-    print(colored('Browser: \t' + browser, 'yellow', attrs=['bold']))
-    print(colored('URL: \t' + site, 'yellow', attrs=['bold']))
+    print(colored('Environment: \t' + var.env, 'yellow', attrs=['bold']))
+    print(colored('Browser: \t' + var.browser, 'yellow', attrs=['bold']))
+    print(colored('URL: \t' + var.site, 'yellow', attrs=['bold']))
     print(colored('USER INPUT color test', 'blue', attrs=['bold']))
     print(colored('ERROR color test', 'magenta', attrs=['bold']))
     print(colored("ELAPSED Time color test", 'white', 'on_green', attrs=['bold']))
@@ -77,9 +61,9 @@ def elt_data(env):
 
 def login(driver):
     print("Logging in")
-    driver.find_element_by_xpath("//input[@id='login__input--username']").send_keys(user)
-    driver.find_element_by_xpath("//input[@id='login__input--password']").send_keys(password)
-    time.sleep(time_between_input)
+    driver.find_element_by_xpath("//input[@id='login__input--username']").send_keys(var.user)
+    driver.find_element_by_xpath("//input[@id='login__input--password']").send_keys(var.password)
+    time.sleep(var.input_delay)
     driver.find_element_by_xpath("//button-primary[@id='login__input--submit']").click()
 
 
@@ -155,7 +139,7 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     print(colored('First name: ' + first_name, 'yellow'))
     driver.find_element_by_xpath("//input[@Id='primary-info__input--first-name']").send_keys(first_name)
 
-    print(colored('DOB: ' + dob, 'yellow'))  # TODO date entry bug: sometimes too fast
+    print(colored('DOB: ' + dob, 'yellow'))
     dob_input = WebDriverWait(driver, 5).until(
         EC.element_to_be_clickable((
             By.XPATH, "//div[@class='input-row red-border']")))
@@ -163,7 +147,7 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     WebDriverWait(driver, 5).until(
         EC.element_to_be_clickable((
             By.XPATH, "//div[@class='input-row red-border']"))).click()
-    time.sleep(time_between_input)
+    time.sleep(var.input_delay)
 
     action_chain = ActionChains(driver)  # workaround for stale DOM
     action_chain.move_to_element(dob_input).send_keys(dob).perform()  # enters DOB
@@ -187,13 +171,13 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     driver.find_element_by_xpath("//input[@placeholder='Home Phone']").send_keys(
         phone)  # set phone number to 0 (default)
 
-    if env == 'dev':
-        # workaround for invalid PHN to add patient: check 'private' checkbox [testing]
+    if var.env == 'dev':
+        # workaround for invalid PHN to add patient in test env: check 'private' checkbox
         driver.find_element_by_xpath("//mat-checkbox[@Id='primary-info__checkbox--private']").click()
 
     user_prompt("Check if patient information is correct. ")
 
-    # click on footer div in case save buttons not enabled
+    # click on footer div in case save button's not enabled
     driver.find_element_by_xpath("//div[@class='footer-container']").click()
 
     try:  # TODO except block never executed (suspect save button always available)
@@ -232,14 +216,14 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     #         By.XPATH, "//div[@class='input-row red-border']"))).click()
     # action.move_to_element(service_date_input).send_keys(service_date).perform()  # enter service date
 
-    time.sleep(time_between_input)
+    time.sleep(var.input_delay)
 
     print(colored('MD number: ' + str(md_number), 'yellow'))
     md_element = driver.find_element_by_xpath("//input[@placeholder='Ref. by MD Number']")
     md_element.clear()
     md_element.send_keys(md_number)  # enter md number
 
-    time.sleep(time_between_input)
+    time.sleep(var.input_delay)
 
     print(colored('Fee item: ' + str(fee_item), 'yellow'))
     # driver.find_element_by_xpath("//input[@placeholder='Fee Item']").send_keys(fee_item)  # enter fee item
@@ -247,7 +231,7 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     send_delayed_keys(fee_element, str(fee_item))
 
     fee_element.send_keys(Keys.BACKSPACE)  # removes existing input
-    time.sleep(time_between_input)
+    time.sleep(var.input_delay)
     send_delayed_keys(fee_element, str(fee_item)[-1:])
 
     print(colored('Diagnostic code: ' + str(diag_code), 'yellow'))
@@ -288,27 +272,27 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
 
 
 def main():
-    is_environment_set(env)
+    is_environment_set(var.env)
     init_colorama()
     start_time = time.time()
-    df = elt_data(env)
-    driver = select_browser(browser)
-    if env == 'dev':
+    df = elt_data(var.env)
+    driver = select_browser(var.browser)
+    if var.env == 'dev':
         dev_env_test()
 
     user_prompt('Ready to start?')
 
     print('============================= ACCESS WEBSITE ==============================')
     print('Open EMR')
-    driver.get(site)
+    driver.get(var.site)
     driver.implicitly_wait(3)  # driver waits before searching when element is not present
     login(driver)
 
     driver.find_element_by_xpath("//mat-icon[@id='tabs__icon--practitioner-dropdown']").click()
 
-    if env == 'production':
+    if var.env == 'production':
         driver.find_element_by_xpath("//span[text()='Laksman, Z (ZLaksman)']").click()
-    elif env == 'dev':
+    elif var.env == 'dev':
         driver.find_element_by_xpath("//span[text()='MD, S (S-MD)']").click()
 
     driver.find_element_by_xpath("//button[@id='sidebar-component__button--app-selector-button']").click()
@@ -359,7 +343,7 @@ def main():
                       'on_green'
                       ))
 
-        if env == 'dev':
+        if var.env == 'dev':
             break  # prevent moving on to next row (patient)
 
     print("Done...closing driver")
