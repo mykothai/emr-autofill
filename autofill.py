@@ -1,13 +1,11 @@
 import browser_driver
 import extract_load_transform as elt
-import keypress
 import message as msg
 import time
 import validate
 import variables as var
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from termcolor import colored
 
 
 def login(driver):
@@ -93,11 +91,7 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
 
     msg.show_confirmation('Fee item: ' + str(fee_item))
     fee_element = driver.find_element_by_xpath("//input[@placeholder='Fee Item']")
-    keypress.send_delayed_keys(fee_element, str(fee_item))
-
-    fee_element.send_keys(Keys.BACKSPACE)  # removes existing input
-    time.sleep(var.input_delay)
-    keypress.send_delayed_keys(fee_element, str(fee_item)[-1:])
+    fee_element.send_keys(fee_item)
 
     msg.show_confirmation('Diagnostic code: ' + str(diag_code))
     dc_element = driver.find_element_by_xpath("//input[@placeholder='Diagnostic Code']")
