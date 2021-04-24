@@ -5,10 +5,7 @@ import message as msg
 import time
 import validate
 import variables as var
-from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from termcolor import colored
 
@@ -30,19 +27,6 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     msg.show_confirmation('First name: ' + first_name)
     driver.find_element_by_xpath("//input[@Id='primary-info__input--first-name']").send_keys(first_name)
 
-    msg.show_confirmation('DOB: ' + dob)
-    dob_input = WebDriverWait(driver, 5).until(
-        EC.element_to_be_clickable((
-            By.XPATH, "//div[@class='input-row red-border']")))
-
-    WebDriverWait(driver, 5).until(
-        EC.element_to_be_clickable((
-            By.XPATH, "//div[@class='input-row red-border']"))).click()
-    time.sleep(var.input_delay)
-
-    action_chain = ActionChains(driver)  # workaround for stale DOM
-    action_chain.move_to_element(dob_input).send_keys(dob).perform()  # enters DOB
-
     msg.show_confirmation('Gender: ' + gender)
     try:
         gender_select = driver.find_element_by_xpath("//mat-select[@Id='primary-info__select--gender']")
@@ -55,12 +39,20 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
             driver.find_element_by_xpath("//mat-option[@value='F']").click()
         elif gender == 'T':
             driver.find_element_by_xpath("//mat-option[@value='T']").click()
+
+        gender_select.send_keys(Keys.TAB)  # move to dob field
     except Exception as e:
         error_string = e, 'Specified gender not found!'
         msg.show_error(error_string)
 
-    driver.find_element_by_xpath("//input[@placeholder='Home Phone']").send_keys(
-        phone)  # set phone number to 0 (default)
+    msg.show_confirmation('DOB: ' + dob)
+    dob = dob.split('-')
+
+    action_chain = ActionChains(driver)  # workaround for stale DOM
+    action_chain.send_keys(dob[0]).send_keys(Keys.TAB).send_keys(dob[1]).send_keys(Keys.TAB).send_keys(dob[2])
+    action_chain.perform()
+
+    driver.find_element_by_xpath("//input[@placeholder='Home Phone']").send_keys(phone)  # 0 is default
 
     if var.env == 'dev':
         # workaround for invalid PHN to add patient in test env: check 'private' checkbox
