@@ -37,5 +37,5 @@ def show_prompt(message):
                 exit()
 
 
-def show_time_elapsed(message):
+def show_success(message):
     print(colored(message, 'green', attrs=['bold']))

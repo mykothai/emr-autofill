@@ -181,17 +181,14 @@ def main():
 
                 add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
 
-            print(colored('\n============================= BILLING COMPLETE ============================\n',
-                          'white',
-                          'on_green'
-                          ))
+            msg.show_success('\n============================= BILLING COMPLETE ============================\n')
 
             if var.env == 'dev':
                 break  # prevent moving on to next row (patient)
 
         print("Done...closing driver")
     finally:
-        msg.show_time_elapsed("--- Elapsed time: %s minutes ---" % ((time.time() - start_time) / 60))
+        msg.show_success("--- Elapsed time: %s minutes ---" % ((time.time() - start_time) / 60))
 
 
 if __name__ == "__main__":
