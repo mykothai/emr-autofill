@@ -149,7 +149,7 @@ def main():
 
             print('============================= SEARCHING PATIENT BY PHN =======================')
             driver.find_element_by_xpath(
-                "//mat-icon[@id='patient-selection-container__button--search-patient']").click()
+                "//button[@id='patient-selection-container__button--search-patient']").click()
             driver.find_element_by_xpath("//input[@id='patient-search-dialog__input--phn']").send_keys(phn)  # enter PHN
 
             is_patient_exist = False
