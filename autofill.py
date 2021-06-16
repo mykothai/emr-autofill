@@ -50,7 +50,11 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     action_chain.send_keys(dob[0]).send_keys(Keys.TAB).send_keys(dob[1]).send_keys(Keys.TAB).send_keys(dob[2])
     action_chain.perform()
 
-    driver.find_element_by_xpath("//input[@placeholder='Home Phone']").send_keys(phone)  # 0 is default
+    try:
+        driver.find_element_by_xpath("//input[@data-placeholder='Home Phone']").send_keys(phone)  # 0 is default
+    except Exception as e:
+        error_string = e, 'Phone number not found!'
+        msg.show_error(error_string)
 
     if var.env == 'dev':
         # workaround for invalid PHN to add patient in test env: check 'private' checkbox
@@ -83,18 +87,18 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     time.sleep(var.input_delay)
     msg.show_confirmation('MD number: ' + str(md_number))
 
-    md_element = driver.find_element_by_xpath("//input[@placeholder='Ref. by MD Number']")
+    md_element = driver.find_element_by_xpath("//input[@data-placeholder='Ref. by MD Number']")
     md_element.clear()
     md_element.send_keys(md_number)  # enter md number
 
     time.sleep(var.input_delay)
 
     msg.show_confirmation('Fee item: ' + str(fee_item))
-    fee_element = driver.find_element_by_xpath("//input[@placeholder='Fee Item']")
+    fee_element = driver.find_element_by_xpath("//input[@data-placeholder='Fee Item']")
     fee_element.send_keys(fee_item)
 
     msg.show_confirmation('Diagnostic code: ' + str(diag_code))
-    dc_element = driver.find_element_by_xpath("//input[@placeholder='Diagnostic Code']")
+    dc_element = driver.find_element_by_xpath("//input[@data-placeholder='Diagnostic Code']")
     dc_element.clear()
     dc_element.send_keys(diag_code)  # enter diagnostic code
     msg.show_prompt("Check if billing page is correct then continue. ")
@@ -119,7 +123,7 @@ def main():
 
         msg.show_prompt('Ready to start?')
 
-        print('============================= ACCESSING WEBSITE ==============================')
+        print('============================= ACCESSING WEBSITE ============================')
         driver.get(var.site)
         driver.implicitly_wait(3)
         login(driver)
@@ -147,7 +151,7 @@ def main():
             fee_item = patient[13]
             diagnostic_code = patient[14]
 
-            print('============================= SEARCHING PATIENT BY PHN =======================')
+            print('============================= SEARCHING PATIENT BY PHN =====================')
             driver.find_element_by_xpath(
                 "//button[@id='patient-selection-container__button--search-patient']").click()
             driver.find_element_by_xpath("//input[@id='patient-search-dialog__input--phn']").send_keys(phn)  # enter PHN
@@ -167,7 +171,7 @@ def main():
                 pass
 
             if is_patient_exist:
-                print('============================= PATIENT FOUND ===============================')
+                print('============================= PATIENT FOUND ================================')
                 formatted_phn = phn[:4] + " " + phn[4:7] + " " + phn[7:]
                 print("Patient found", formatted_phn)
                 driver.find_element_by_xpath(
