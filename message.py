@@ -13,7 +13,7 @@ def dev_env_test():
 
 
 def show_error(error_msg):
-    print(colored(error_msg, 'magenta', attrs=['bold']))
+    print(colored(error_msg, 'red', attrs=['bold']))
 
 
 def show_message(message):
@@ -24,9 +24,9 @@ def show_confirmation(message):
     print(colored(message, 'yellow'))
 
 
-def show_prompt(message):
+def show_prompt(message, continue_prompt=True):
     while True:
-        print(colored('\n' + message.upper() + " Continue? (y/n)", 'blue', attrs=['bold']))
+        print(colored('\n' + message.upper() + " Continue? (y/n)" if continue_prompt else "", 'blue', attrs=['bold']))
         user_input = input()
         if user_input == 'y' or '0':
             break
@@ -39,3 +39,7 @@ def show_prompt(message):
 
 def show_success(message):
     print(colored(message, 'green', attrs=['bold']))
+
+
+def show_info(message):
+    print(colored(message, 'magenta'))

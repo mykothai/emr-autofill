@@ -60,7 +60,7 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
         # workaround for invalid PHN to add patient in test env: check 'private' checkbox
         driver.find_element_by_xpath("//mat-checkbox[@Id='primary-info__checkbox--private']").click()
 
-    msg.show_prompt("Check if patient information is correct. ")
+    msg.show_prompt("Verify patient demographics.")
 
     # click on footer div in case save button's not enabled
     driver.find_element_by_xpath("//mat-dialog-actions[@class='mat-dialog-actions']").click()
@@ -112,7 +112,7 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number, phn):
     dc_element = driver.find_element_by_xpath("//input[@data-placeholder='Diagnostic Code']")
     dc_element.clear()
     dc_element.send_keys(diag_code)  # enter diagnostic code
-    msg.show_prompt("Check if billing page is correct then continue. ")
+    msg.show_prompt("Verify billing page.")
 
     try:
         if driver.find_element_by_xpath("//button[@class='button-secondary normal']"):
@@ -132,7 +132,7 @@ def main():
         if var.env == 'dev':
             msg.dev_env_test()
 
-        msg.show_prompt('Ready to start?')
+        msg.show_prompt('Ready to start', continue_prompt=False)
 
         print('============================= ACCESSING WEBSITE ============================')
         driver.get(var.site)
@@ -149,8 +149,8 @@ def main():
 
         driver.find_element_by_xpath("//button[@id='sidebar-component__button--app-selector-button']").click()
         driver.find_element_by_xpath("//button[@id='sidebar-component__button--menu-item-1']").click()
+        print('Start data entry\n')
 
-        print("Start data entry")
         for patient in df.itertuples():
             phn = patient[3]
             last_name = patient[4]
@@ -169,23 +169,23 @@ def main():
             driver.find_element_by_xpath("//input[@id='patient-search-dialog__input--phn']").send_keys(phn)  # enter PHN
             time.sleep(var.input_delay)
             is_patient_exist = False
+
             try:
                 if bool(driver.find_element_by_xpath("//div[@id='patient-search-dialog_label--no-patient-found']")):
-                    print('No Patients Found...adding patient')
+                    print('No Patients Found...adding patient\n')
                     print('============================= ADDING NEW PATIENT =============================')
                     add_patient(driver, last_name, first_name, dob, gender, phone)
 
                     print('============================= BILLING INFORMATION =========================')
                     add_billing(driver, service_date, fee_item, diagnostic_code, md_number, phn)
             except Exception as e:
-                print(e)
                 is_patient_exist = True
                 pass
 
             if is_patient_exist:
                 print('============================= PATIENT FOUND ================================')
                 formatted_phn = phn[:4] + " " + phn[4:7] + " " + phn[7:]
-                print("Patient found", formatted_phn)
+                msg.show_info("Patient found:" + str(formatted_phn))
                 driver.find_element_by_xpath(
                     "//td[@class='mat-cell cdk-cell cdk-column-phn mat-column-phn ng-star-inserted']").click()
 
@@ -194,8 +194,7 @@ def main():
                 except Exception as e:
                     break
 
-
-            msg.show_success('\n============================= BILLING COMPLETE ============================\n')
+            msg.show_success('\n============================= BILLING COMPLETE =============================\n\n\n')
 
             if var.env == 'dev':
                 break  # prevent moving on to next row (patient)
