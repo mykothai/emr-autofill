@@ -173,7 +173,7 @@ def main():
             try:
                 if bool(driver.find_element_by_xpath("//div[@id='patient-search-dialog_label--no-patient-found']")):
                     print('No Patients Found...adding patient\n')
-                    print('============================= ADDING NEW PATIENT =============================')
+                    print('============================= ADDING NEW PATIENT ===========================')
                     add_patient(driver, last_name, first_name, dob, gender, phone)
 
                     print('============================= BILLING INFORMATION =========================')
