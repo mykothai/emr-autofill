@@ -4,7 +4,6 @@ import message as msg
 import time
 import validate
 import variables as var
-from keypress import send_delayed_keys
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
