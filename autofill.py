@@ -4,6 +4,7 @@ import message as msg
 import time
 import validate
 import variables as var
+from keypress import send_delayed_keys
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
@@ -63,26 +64,32 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
     msg.show_prompt("Check if patient information is correct. ")
 
     # click on footer div in case save button's not enabled
-    driver.find_element_by_xpath("//div[@class='footer-container']").click()
+    driver.find_element_by_xpath("//mat-dialog-actions[@class='mat-dialog-actions']").click()
 
     try:
-        if driver.find_element_by_xpath("//form[@class='ng-untouched ng-dirty ng-valid']"):
-            driver.find_element_by_xpath("//span[text()='SAVE']").click()
-            print('Patient saved!')
+        driver.find_element_by_xpath("//span[text()='SAVE']").click()
+        print('Patient saved!')
     except Exception as e:
         error_string = e, 'Cannot SAVE, fields are missing or invalid'
         msg.show_error(error_string)
 
     try:
-        if driver.find_element_by_xpath("//form[@class='ng-untouched ng-dirty ng-valid']"):
-            driver.find_element_by_xpath("//span[text()='SAVE & CLOSE']").click()  # click save and close
-            print('Patient information pop up saved and closed!')
+        driver.find_element_by_xpath("//span[text()='SAVE & CLOSE']").click()  # click save and close
+        print('Patient information pop up saved and closed!')
     except Exception as e:
         error_string = e, 'Cannot SAVE & CLOSE, fields are missing or invalid'
         msg.show_error(error_string)
 
 
-def add_billing(driver, service_date, fee_item, diag_code, md_number):
+def add_billing(driver, service_date, fee_item, diag_code, md_number, phn):
+    claim_phn = ''
+
+    while not claim_phn == phn:
+        #  ensure billing section is loaded on correct patient by cross referencing phn and claim phn
+        phn_on_page = driver.find_element_by_xpath("//input[@data-placeholder='Claim PHN']")
+        claim_phn = str(phn_on_page.get_property('value')).replace(" ", "")
+        time.sleep(var.input_delay)
+
     msg.show_confirmation('Service date: ' + str(service_date))
     time.sleep(var.input_delay)
     msg.show_confirmation('MD number: ' + str(md_number))
@@ -93,9 +100,14 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
 
     time.sleep(var.input_delay)
 
-    msg.show_confirmation('Fee item: ' + str(fee_item))
-    fee_element = driver.find_element_by_xpath("//input[@data-placeholder='Fee Item']")
-    fee_element.send_keys(fee_item)
+    try:
+        msg.show_confirmation('Fee item: ' + str(fee_item))
+        fee_element = driver.find_element_by_xpath("//input[@data-placeholder='Fee Item']")
+        fee_element.clear()
+        fee_element.send_keys(fee_item)
+    except Exception as e:
+        error_string = 'Failed to enter fee item' + str(e)
+        msg.show_error(error_string)
 
     msg.show_confirmation('Diagnostic code: ' + str(diag_code))
     dc_element = driver.find_element_by_xpath("//input[@data-placeholder='Diagnostic Code']")
@@ -104,7 +116,7 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number):
     msg.show_prompt("Check if billing page is correct then continue. ")
 
     try:
-        if driver.find_element_by_xpath("//form[@class='ng-star-inserted ng-dirty ng-touched ng-valid']"):
+        if driver.find_element_by_xpath("//button[@class='button-secondary normal']"):
             driver.find_element_by_xpath("//span[text()='Create']").click()  # click save and close
             print('Patient information pop up saved and closed!')
     except Exception as e:
@@ -131,12 +143,13 @@ def main():
         driver.find_element_by_xpath("//mat-icon[@id='tabs__icon--practitioner-dropdown']").click()
 
         if var.env == 'production':
+            time.sleep(var.input_delay)  #TODO: investigate inability to click on doctor in drop down menu
             driver.find_element_by_xpath("//span[text()='Laksman, Z (ZLaksman)']").click()
         elif var.env == 'dev':
             driver.find_element_by_xpath("//span[text()='MD, S (S-MD)']").click()
 
         driver.find_element_by_xpath("//button[@id='sidebar-component__button--app-selector-button']").click()
-        driver.find_element_by_xpath("//span[text()='Billing']").click()
+        driver.find_element_by_xpath("//button[@id='sidebar-component__button--menu-item-1']").click()
 
         print("Start data entry")
         for patient in df.itertuples():
@@ -155,16 +168,16 @@ def main():
             driver.find_element_by_xpath(
                 "//button[@id='patient-selection-container__button--search-patient']").click()
             driver.find_element_by_xpath("//input[@id='patient-search-dialog__input--phn']").send_keys(phn)  # enter PHN
-
+            time.sleep(var.input_delay)
             is_patient_exist = False
             try:
-                if driver.find_element_by_xpath("//div[@id='patient-search-dialog_label--no-patient-found']"):
+                if bool(driver.find_element_by_xpath("//div[@id='patient-search-dialog_label--no-patient-found']")):
                     print('No Patients Found...adding patient')
                     print('============================= ADDING NEW PATIENT =============================')
                     add_patient(driver, last_name, first_name, dob, gender, phone)
 
                     print('============================= BILLING INFORMATION =========================')
-                    add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
+                    add_billing(driver, service_date, fee_item, diagnostic_code, md_number, phn)
             except Exception as e:
                 print(e)
                 is_patient_exist = True
@@ -177,7 +190,11 @@ def main():
                 driver.find_element_by_xpath(
                     "//td[@class='mat-cell cdk-cell cdk-column-phn mat-column-phn ng-star-inserted']").click()
 
-                add_billing(driver, service_date, fee_item, diagnostic_code, md_number)
+                try:
+                    add_billing(driver, service_date, fee_item, diagnostic_code, md_number, phn)
+                except Exception as e:
+                    break
+
 
             msg.show_success('\n============================= BILLING COMPLETE ============================\n')
 
