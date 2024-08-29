@@ -14,7 +14,7 @@ def get_driver(browser):
             browser_options.add_argument("--disable-extensions")
             browser_options.add_experimental_option('detach', True)  # keeps chrome and chromedriver open
             driver = webdriver.Chrome(
-                executable_path=r'./resources/chromedriver100.0.4896.60.exe',
+                executable_path=r'./resources/chromedriver127.0.6533.72',
                 options=browser_options
             )
         elif browser == 'firefox':
