@@ -62,8 +62,8 @@ def add_patient(driver, last_name, first_name, dob, gender, phone):
 
     msg.show_prompt("Verify patient demographics.")
 
-    # click on footer div in case save button's not enabled
-    driver.find_element_by_xpath("//mat-dialog-actions[@class='mat-dialog-actions']").click()
+    # click on Cell Phone input field in case save button's not enabled
+    driver.find_element_by_xpath("//input[@data-placeholder='Cell Phone']").click()
 
     try:
         driver.find_element_by_xpath("//span[text()='SAVE']").click()
@@ -113,6 +113,9 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number, phn):
     dc_element.clear()
     dc_element.send_keys(diag_code)  # enter diagnostic code
     msg.show_prompt("Verify billing page.")
+
+    # delay needed to populate before 'create' can be clicked
+    time.sleep(2)
 
     try:
         if driver.find_element_by_xpath("//button[@class='button-secondary normal']"):
