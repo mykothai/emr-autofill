@@ -154,17 +154,17 @@ def main():
         driver.find_element_by_xpath("//button[@id='sidebar-component__button--menu-item-1']").click()
         print('Start data entry\n')
 
-        for patient in df.itertuples():
-            phn = patient[3]
-            last_name = patient[4]
-            first_name = patient[5]
-            dob = patient[7]
-            gender = patient[6]
+        for row in df.itertuples():
+            phn = row[3]
+            last_name = row[4]
+            first_name = row[5]
+            dob = row[7]
+            gender = row[6]
             phone = 0
-            md_number = patient[10]
-            service_date = patient[12]
-            fee_item = patient[13]
-            diagnostic_code = patient[14]
+            md_number = row[10]
+            service_date = row[12]
+            fee_item = row[13]
+            diagnostic_code = row[14]
 
             print('============================= SEARCHING PATIENT BY PHN =====================')
             driver.find_element_by_xpath(
