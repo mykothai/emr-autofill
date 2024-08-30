@@ -26,14 +26,14 @@ def show_confirmation(message):
 
 def show_prompt(message, continue_prompt=True):
     while True:
-        print(colored('\n' + message.upper() + " Continue? (y/n)" if continue_prompt else "", 'blue', attrs=['bold']))
+        print(colored('\n' + message.upper() + " Continue? (y/n)" if continue_prompt else message.upper(), 'blue', attrs=['bold']))
         user_input = input()
-        if user_input == 'y' or user_input == '1':
+        if user_input == 'y' or user_input == '':
             break
         else:
             print(colored("Are you sure you want to QUIT the program? (y/n)", 'red'))
             terminate = input()
-            if terminate == 'y' or terminate == '1':
+            if terminate == 'y' or terminate == '':
                 exit()
 
 

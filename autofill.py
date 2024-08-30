@@ -135,7 +135,7 @@ def main():
         if var.env == 'dev':
             msg.dev_env_test()
 
-        msg.show_prompt('Ready to start', continue_prompt=False)
+        msg.show_prompt('To start, press enter...', False)
 
         print('============================= ACCESSING WEBSITE ============================')
         driver.get(var.site)
