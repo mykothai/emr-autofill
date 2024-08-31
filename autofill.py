@@ -89,7 +89,36 @@ def add_billing(driver, service_date, fee_item, diag_code, md_number, phn):
         claim_phn = str(phn_on_page.get_property('value')).replace(" ", "")
         time.sleep(var.input_delay)
 
-    msg.show_confirmation('Service date: ' + str(service_date))
+    parsed_service_date = service_date.split('-')
+    try:
+        # For each date picker field, find the element, clear it and enter a value
+        service_date_element = driver.find_element_by_xpath(
+            "//div[@class='input-row text-ellipsis']//input[@type='text'][@name='year']"
+        )
+        service_date_element.send_keys(Keys.CONTROL, "a")
+        service_date_element.send_keys(Keys.BACKSPACE)
+        service_date_element.send_keys(parsed_service_date[0])
+        time.sleep(var.input_delay)
+
+        service_date_element = driver.find_element_by_xpath(
+            "//div[@class='input-row text-ellipsis']//input[@type='text'][@name='month']"
+        )
+        service_date_element.send_keys(Keys.CONTROL, "a")
+        service_date_element.send_keys(Keys.BACKSPACE)
+        service_date_element.send_keys(parsed_service_date[1])
+        time.sleep(var.input_delay)
+
+        service_date_element = driver.find_element_by_xpath(
+            "//div[@class='input-row text-ellipsis']//input[@type='text'][@name='day']"
+        )
+        service_date_element.send_keys(Keys.CONTROL, "a")
+        service_date_element.send_keys(Keys.BACKSPACE)
+        service_date_element.send_keys(parsed_service_date[2])
+
+    except Exception as e:
+        print('An error occurred when entering service date ' + str(fee_item) + ' Error:' + e)
+        msg.show_confirmation('Make changes or corrections then press \'Enter\'')
+
     time.sleep(var.input_delay)
     msg.show_confirmation('MD number: ' + str(md_number))
 
